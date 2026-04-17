@@ -2,67 +2,51 @@
 
 Each domain module exposes a ``register(r)`` function that adds its RPC
 methods to the shared dict. ``registry()`` builds and returns that dict.
-"""
 
-from __future__ import annotations
+Note: the handler named ``annotations`` collides with
+``__future__.annotations`` if ``from __future__ import annotations``
+sits at module scope — Python resolves the tuple entry to the
+``_Feature`` object instead of the submodule. So we don't use that
+future import here and we load submodules by string name instead of
+unpacked ``from . import …``.
+"""
 
 from typing import Callable, Dict
 
 
-def registry() -> Dict[str, Callable]:
-    r: Dict[str, Callable] = {}
-    from . import (
-        documents,
-        geometry,
-        sketch,
-        parts,
-        io,
-        defeaturing,
-        analysis_prep,
-        materials,
-        bc_tagging,
-        inspection,
-        annotations,
-        views,
-        animation,
-        render,
-        fem_export,
-        blender_bridge,
-        execute,
-        parametric,
-        report,
-        budget,
-        drawing,
-        diff,
-        load_cases,
-        granular,
-    )
+_MODULE_NAMES = (
+    "documents",
+    "geometry",
+    "sketch",
+    "parts",
+    "io",
+    "defeaturing",
+    "analysis_prep",
+    "materials",
+    "bc_tagging",
+    "inspection",
+    "annotations",
+    "views",
+    "animation",
+    "render",
+    "fem_export",
+    "blender_bridge",
+    "execute",
+    "parametric",
+    "report",
+    "budget",
+    "drawing",
+    "diff",
+    "load_cases",
+    "granular",
+)
 
-    for mod in (
-        documents,
-        geometry,
-        sketch,
-        parts,
-        io,
-        defeaturing,
-        analysis_prep,
-        materials,
-        bc_tagging,
-        inspection,
-        annotations,
-        views,
-        animation,
-        render,
-        fem_export,
-        blender_bridge,
-        execute,
-        parametric,
-        report,
-        budget,
-        drawing,
-        diff,
-        load_cases,
-        granular,
-    ):
+
+def registry() -> Dict[str, Callable]:
+    import importlib
+
+    r: Dict[str, Callable] = {}
+    for name in _MODULE_NAMES:
+        mod = importlib.import_module(f".{name}", package=__name__)
         mod.register(r)
     return r
