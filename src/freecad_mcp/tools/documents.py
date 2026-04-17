@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from mcp.server.fastmcp import Context
 
@@ -50,3 +50,25 @@ def register(mcp, get_client):
     def delete_object(ctx: Context, obj_name: str, doc_name: Optional[str] = None) -> Dict[str, Any]:
         """Delete an object and recompute."""
         return get_client().call("delete_object", obj_name=obj_name, doc_name=doc_name)
+
+    @mcp.tool()
+    def rename_object(
+        ctx: Context, obj_name: str, new_label: str,
+        doc_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Rename an object's user-facing Label. The internal Name is
+        immutable; FreeCAD auto-suffixes Label collisions (e.g. Bracket001).
+        """
+        return get_client().call(
+            "rename_object", obj_name=obj_name, new_label=new_label, doc_name=doc_name,
+        )
+
+    @mcp.tool()
+    def rename_objects(
+        ctx: Context, renames: List[Dict[str, str]],
+        doc_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Batch-rename multiple objects. ``renames`` items: ``{"name": "<id>", "label": "<new>"}``."""
+        return get_client().call(
+            "rename_objects", renames=renames, doc_name=doc_name,
+        )

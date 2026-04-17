@@ -84,6 +84,54 @@ def delete_object(obj_name: str, doc_name: Optional[str] = None) -> Dict[str, An
     return ok()
 
 
+def rename_object(
+    obj_name: str,
+    new_label: str,
+    doc_name: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Set an object's Label. Name (internal id) is immutable in FreeCAD;
+    Label is the user-facing string shown in the tree and in assemblies.
+    FreeCAD auto-suffixes duplicates (``Bracket001``) so we just read back
+    the final Label.
+    """
+    doc = get_document(doc_name)
+    obj = doc.getObject(obj_name)
+    if obj is None:
+        return err(f"Object '{obj_name}' not found")
+    old_label = obj.Label
+    obj.Label = str(new_label)
+    doc.recompute()
+    return ok(name=obj.Name, old_label=old_label, label=obj.Label)
+
+
+def rename_objects(
+    renames: List[Dict[str, str]],
+    doc_name: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Batch rename. ``renames`` is a list of ``{name, label}`` dicts.
+
+    Useful after importing a STEP file where OCC generates opaque labels
+    like ``Solid`` / ``Solid001`` and you want one round-trip to fix them.
+    """
+    doc = get_document(doc_name)
+    results: List[Dict[str, Any]] = []
+    for entry in renames or []:
+        nm = entry.get("name")
+        lbl = entry.get("label")
+        if not nm or lbl is None:
+            results.append({"name": nm, "success": False, "error": "missing name or label"})
+            continue
+        obj = doc.getObject(nm)
+        if obj is None:
+            results.append({"name": nm, "success": False, "error": "not found"})
+            continue
+        old = obj.Label
+        obj.Label = str(lbl)
+        results.append({"name": nm, "old_label": old, "label": obj.Label, "success": True})
+    doc.recompute()
+    return ok(renamed=results, count=sum(1 for r in results if r.get("success")))
+
+
 def _jsonify(value: Any) -> Any:
     if hasattr(value, "x") and hasattr(value, "y") and hasattr(value, "z"):
         return {"x": float(value.x), "y": float(value.y), "z": float(value.z)}
@@ -109,5 +157,7 @@ def register(r: Dict[str, Any]) -> None:
             "get_objects": get_objects,
             "get_object": get_object,
             "delete_object": delete_object,
+            "rename_object": rename_object,
+            "rename_objects": rename_objects,
         }
     )

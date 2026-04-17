@@ -116,6 +116,102 @@ def keyframe_camera(
     return ok(frames_rendered=len(rendered), directory=str(out))
 
 
+def keyframe_parts(
+    output_dir: str,
+    tracks: List[Dict[str, Any]],
+    frames_between: int = 30,
+    width: int = 1600,
+    height: int = 1000,
+    background: str = "Current",
+    restore_on_finish: bool = True,
+) -> Dict[str, Any]:
+    """Animate one or more objects' Placements across keyframes.
+
+    Each track describes one animated object:
+
+        {
+          "object": "Bracket",
+          "keyframes": [
+            {"pos": {x,y,z}, "rot": {axis:{x,y,z}, angle_deg: 0.0}},
+            {"pos": {x,y,z}, "rot": {axis:{x,y,z}, angle_deg: 90.0}},
+            ...
+          ]
+        }
+
+    All tracks must have the same number of keyframes. For each pair of
+    keyframes, ``frames_between`` interpolated frames are rendered — so
+    N keyframes produce ``(N-1) * frames_between`` PNG frames.
+
+    Rotation is linearly interpolated on axis + angle (no slerp yet;
+    adequate for small-rotation previews). Starting placements are
+    restored at the end when ``restore_on_finish`` is true.
+    """
+    import FreeCADGui
+    view = FreeCADGui.ActiveDocument.ActiveView if FreeCADGui.ActiveDocument else None
+    if view is None:
+        return err("No active 3D view")
+    if not tracks:
+        return err("at least one track required")
+
+    doc = FreeCAD.ActiveDocument
+    if doc is None:
+        return err("No active document")
+
+    # Resolve all objects once, validate keyframe counts match.
+    resolved: List[Dict[str, Any]] = []
+    expected_kf = None
+    for tr in tracks:
+        obj = doc.getObject(tr.get("object", ""))
+        if obj is None:
+            return err(f"Track object not found: {tr.get('object')}")
+        kfs = tr.get("keyframes") or []
+        if expected_kf is None:
+            expected_kf = len(kfs)
+        elif len(kfs) != expected_kf:
+            return err("All tracks must have the same number of keyframes")
+        if len(kfs) < 2:
+            return err(f"Track '{obj.Name}' needs ≥ 2 keyframes")
+        resolved.append({"obj": obj, "keyframes": kfs, "original": obj.Placement})
+
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    rendered: List[str] = []
+    idx = 0
+    segments = expected_kf - 1
+    try:
+        for seg in range(segments):
+            for step in range(frames_between):
+                t = step / float(frames_between)
+                for tr in resolved:
+                    a = tr["keyframes"][seg]
+                    b = tr["keyframes"][seg + 1]
+                    tr["obj"].Placement = _interp_placement(a, b, t)
+                doc.recompute()
+                path = str(out / f"frame_{idx:04d}.png")
+                view.saveImage(path, int(width), int(height), background)
+                rendered.append(path)
+                idx += 1
+        # Always render the final keyframe as the last frame.
+        for tr in resolved:
+            tr["obj"].Placement = _placement_from_kf(tr["keyframes"][-1])
+        doc.recompute()
+        final_path = str(out / f"frame_{idx:04d}.png")
+        view.saveImage(final_path, int(width), int(height), background)
+        rendered.append(final_path)
+    finally:
+        if restore_on_finish:
+            for tr in resolved:
+                tr["obj"].Placement = tr["original"]
+            doc.recompute()
+
+    return ok(
+        frames_rendered=len(rendered),
+        directory=str(out),
+        tracks=[tr["obj"].Name for tr in resolved],
+    )
+
+
 def _lerp_vec(a: Dict[str, float], b: Dict[str, float], t: float) -> FreeCAD.Vector:
     return FreeCAD.Vector(
         a["x"] + (b["x"] - a["x"]) * t,
@@ -129,10 +225,42 @@ def _coin_vec(v: Dict[str, float]):
     return coin.SbVec3f(float(v["x"]), float(v["y"]), float(v["z"]))
 
 
+def _placement_from_kf(kf: Dict[str, Any]) -> FreeCAD.Placement:
+    pos = kf.get("pos") or {"x": 0, "y": 0, "z": 0}
+    rot = kf.get("rot") or {}
+    axis = rot.get("axis") or {"x": 0, "y": 0, "z": 1}
+    angle = float(rot.get("angle_deg", 0.0))
+    return FreeCAD.Placement(
+        FreeCAD.Vector(float(pos["x"]), float(pos["y"]), float(pos["z"])),
+        FreeCAD.Rotation(
+            FreeCAD.Vector(float(axis["x"]), float(axis["y"]), float(axis["z"])),
+            angle,
+        ),
+    )
+
+
+def _interp_placement(a: Dict[str, Any], b: Dict[str, Any], t: float) -> FreeCAD.Placement:
+    """Linear blend of two keyframe placements at parameter ``t`` ∈ [0,1]."""
+    pos = _lerp_vec(a.get("pos") or {"x": 0, "y": 0, "z": 0},
+                    b.get("pos") or {"x": 0, "y": 0, "z": 0}, t)
+    a_rot = a.get("rot") or {}
+    b_rot = b.get("rot") or {}
+    axis_a = a_rot.get("axis") or {"x": 0, "y": 0, "z": 1}
+    axis_b = b_rot.get("axis") or {"x": 0, "y": 0, "z": 1}
+    axis = _lerp_vec(axis_a, axis_b, t)
+    if axis.Length < 1e-9:
+        axis = FreeCAD.Vector(0, 0, 1)
+    ang_a = float(a_rot.get("angle_deg", 0.0))
+    ang_b = float(b_rot.get("angle_deg", 0.0))
+    angle = ang_a + (ang_b - ang_a) * t
+    return FreeCAD.Placement(pos, FreeCAD.Rotation(axis, angle))
+
+
 def register(r: Dict[str, Any]) -> None:
     r.update(
         {
             "turntable": turntable,
             "keyframe_camera": keyframe_camera,
+            "keyframe_parts": keyframe_parts,
         }
     )

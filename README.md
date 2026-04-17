@@ -59,14 +59,20 @@ number), and writes the PDF. Auto-scales to fit the page.
 
 ### 4. Simplify a CAD import for analysis
 
-> *Open `C:/cad/housing_v2.step`. Tell me what small features it has.
-> Remove every cylindrical hole under 6 mm diameter, every fillet under
-> 2 mm, and every bolt you can find. Keep the original intact. Then tag
-> the `+Z` face as a radiator surface and export for Elmer thermal
+> *Open `C:/cad/housing_v2.step`. Rename the imported solids to
+> `Housing`, `Lid`, `MainBoard`. Heal the geometry, drop any face under
+> 0.5 mm², remove every cylindrical hole under 6 mm, every fillet under
+> 2 mm, and every bolt you can find. Keep the original intact. Mesh the
+> housing at 3 mm, quadratic, and export the mesh as UNV. Then tag the
+> `+Z` face as a radiator surface and export for Elmer thermal
 > analysis.*
 
-The defeaturing tools (`find_holes`, `find_fillets`, `find_fasteners`)
-all preview first so nothing is destroyed silently. BC tags
+`rename_objects` cleans up OCC's auto-named solids in one pass.
+`simplify_shape` runs the full OCC healing pipeline before the
+feature-specific defeaturers go to work. `generate_mesh` + `export_mesh`
+produce a standalone UNV ready for Elmer or Code_Aster; the defeaturing
+tools (`find_holes`, `find_fillets`, `find_fasteners`) all preview
+first so nothing is destroyed silently. BC tags
 (`tag_boundary_by_normal`) let you mark faces with a direction; the
 tag survives through to the `.sif` Elmer case file.
 
@@ -74,10 +80,13 @@ tag survives through to the `.sif` Elmer case file.
 
 > *Position the view isometric on the assembly. Add yellow arrow
 > callouts to the top cover, main board, and mounting bracket. Render
-> a 4K hero shot, then a 180-frame turntable at 1080p.*
+> a 4K hero shot, a 180-frame turntable at 1080p, and a 120-frame
+> exploded-view animation where the top cover lifts 40 mm along +Z.
+> Encode both animations to MP4 at 30 fps.*
 
-Leader arrows with auto-routing. Turntable frames go to a directory
-as PNGs — feed them to `ffmpeg` for an MP4. For a truly cinematic
+Leader arrows with auto-routing. `turntable` and `keyframe_parts`
+render PNG sequences; `encode_video` wraps `ffmpeg` to produce
+`mp4` / `webm` / `gif` / `mov` in one call. For a truly cinematic
 render, `export_for_blender` writes a glTF with a sidecar JSON
 carrying materials and BC tags so a companion Blender MCP can apply
 PBR shaders.
@@ -96,10 +105,13 @@ PBR shaders.
 | **Drawings** | `create_manufacturing_drawing` (one-shot), `create_projection_group` (third-angle layout), `add_drawing_view`, `add_drawing_dimension`, PDF / SVG export |
 | **Reports** | `generate_report` (Markdown with renders + tables), `mass_budget`, `compare_documents` (structural FCStd diff) |
 | **Annotations** | leader callouts with auto-routing, Draft dimensions, section cuts, exploded views |
-| **Renders** | screenshots, PNG renders at configurable quality, turntable animations, keyframe camera paths |
+| **Renders & animation** | screenshots, PNG renders at configurable quality, turntable, keyframe camera paths, **keyframe_parts** (per-object Placement animation), **ffmpeg video encoding** (mp4 / webm / gif / mov) |
 | **Materials** | curated library (aluminium, copper, stainless, Ti, Invar, Si, FR4, CFRP, Kapton, MLI, thermal coatings, fluids) with density / k / Cp / E / ν / CTE / emissivity — assignable per object or face |
 | **BC tagging** | named face groups (inlet / outlet / wall / radiator / fixture / load / heat source / heat sink / ...) — carried through to solver exports |
 | **Defeaturing** | find / remove holes, fillets, chamfers, fasteners (label + shape fingerprint), thin bodies |
+| **Shape healing** | `simplify_shape` pipeline (heal / splitter / unify-same-domain / sew / small-face removal) for STEP/IGES cleanup before meshing |
+| **Meshing** | standalone Gmsh (`generate_mesh`) + neutral-format mesh export (UNV / INP / MED / VTK / BDF / Z88 / STL / OBJ / PLY) independent of full solver decks |
+| **Assembly hygiene** | `rename_object` / `rename_objects` for labelling imported parts |
 | **Analysis prep** | mid-surface extraction, symmetry detection, external-shell extraction, contact-face identification, imprint / merge for conformal meshes |
 | **Solvers** | Elmer (heat / flow / elasticity), CalculiX, OpenFOAM (tagged STL + snappyHexMesh manifest), DEM (Yade / LIGGGHTS / MFIX) |
 | **Load cases** | modal analysis, quasi-static acceleration, random vibration (PSD sidecar) |

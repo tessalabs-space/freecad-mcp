@@ -139,6 +139,53 @@ def register(mcp, get_client):  # noqa: C901 — one function, many tools
             "find_thin_bodies", doc_name=doc_name, min_thickness_mm=min_thickness_mm,
         )
 
+    # -------------------------------------------------- simplification / heal
+    @mcp.tool()
+    def simplify_shape(
+        ctx: Context, obj_name: str,
+        remove_splitter: bool = True, unify_faces: bool = True,
+        unify_edges: bool = True, heal: bool = True,
+        sew_tolerance_mm: Optional[float] = None,
+        min_face_area_mm2: float = 0.0,
+        doc_name: Optional[str] = None, name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Run generic OCC shape healing on an imported body.
+
+        Pipeline: heal → remove_splitter → unify same-domain faces/edges →
+        optional sew → optional tiny-face drop. Useful for STEP/IGES imports
+        before meshing or defeaturing.
+        """
+        return get_client().call(
+            "simplify_shape", obj_name=obj_name,
+            remove_splitter=remove_splitter, unify_faces=unify_faces,
+            unify_edges=unify_edges, heal=heal,
+            sew_tolerance_mm=sew_tolerance_mm,
+            min_face_area_mm2=min_face_area_mm2,
+            doc_name=doc_name, name=name,
+        )
+
+    @mcp.tool()
+    def find_small_faces(
+        ctx: Context, obj_name: str, max_area_mm2: float = 1.0,
+        doc_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """List faces with area ≤ ``max_area_mm2`` (candidates for removal)."""
+        return get_client().call(
+            "find_small_faces", obj_name=obj_name,
+            max_area_mm2=max_area_mm2, doc_name=doc_name,
+        )
+
+    @mcp.tool()
+    def remove_small_faces(
+        ctx: Context, obj_name: str, max_area_mm2: float = 1.0,
+        doc_name: Optional[str] = None, name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Drop faces with area ≤ ``max_area_mm2`` from the body."""
+        return get_client().call(
+            "remove_small_faces", obj_name=obj_name,
+            max_area_mm2=max_area_mm2, doc_name=doc_name, name=name,
+        )
+
     # ---------------------------------------------------- analysis prep
     @mcp.tool()
     def extract_midsurface(
@@ -414,6 +461,33 @@ def register(mcp, get_client):  # noqa: C901 — one function, many tools
         )
 
     @mcp.tool()
+    def keyframe_parts(
+        ctx: Context, output_dir: str,
+        tracks: List[Dict[str, Any]], frames_between: int = 30,
+        width: int = 1600, height: int = 1000,
+        background: str = "Current", restore_on_finish: bool = True,
+    ) -> Dict[str, Any]:
+        """Animate object Placements across keyframes and render PNG frames.
+
+        tracks: [{
+            "object": "<object_name>",
+            "keyframes": [
+                {"pos": {"x":0,"y":0,"z":0}, "rot": {"axis":{"x":0,"y":0,"z":1}, "angle_deg": 0}},
+                ...
+            ]
+        }, ...]
+
+        All tracks must share keyframe count. Pairs of keyframes produce
+        ``frames_between`` interpolated frames each. Original placements
+        are restored when ``restore_on_finish`` is true.
+        """
+        return get_client().call(
+            "keyframe_parts", output_dir=output_dir, tracks=tracks,
+            frames_between=frames_between, width=width, height=height,
+            background=background, restore_on_finish=restore_on_finish,
+        )
+
+    @mcp.tool()
     def render_png(
         ctx: Context, path: Optional[str] = None,
         width: int = 2400, height: int = 1600,
@@ -424,6 +498,70 @@ def register(mcp, get_client):  # noqa: C901 — one function, many tools
         return get_client().call(
             "render_png", path=path, width=width, height=height,
             background=background, quality=quality, return_bytes=return_bytes,
+        )
+
+    # -------------------------------------------------- video encoding
+    @mcp.tool()
+    def encode_video(
+        ctx: Context, frames_dir: str, output_path: str,
+        fps: int = 30, pattern: str = "frame_%04d.png", crf: int = 18,
+        ffmpeg_path: Optional[str] = None,
+        extra_args: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Encode a PNG frame sequence into mp4 / webm / gif / mov via ffmpeg.
+
+        ffmpeg must be installed separately. Format is chosen by the
+        ``output_path`` extension. Default produces visually-lossless
+        H.264 mp4 (crf=18, yuv420p, faststart).
+        """
+        return get_client().call(
+            "encode_video", frames_dir=frames_dir, output_path=output_path,
+            fps=fps, pattern=pattern, crf=crf,
+            ffmpeg_path=ffmpeg_path, extra_args=extra_args,
+        )
+
+    @mcp.tool()
+    def ffmpeg_available(
+        ctx: Context, ffmpeg_path: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Probe whether ffmpeg is on PATH (or at ``ffmpeg_path``)."""
+        return get_client().call("ffmpeg_available", ffmpeg_path=ffmpeg_path)
+
+    # ----------------------------------------------------------- meshing
+    @mcp.tool()
+    def generate_mesh(
+        ctx: Context, obj_name: str, mesh_size_mm: float = 5.0,
+        min_size_mm: Optional[float] = None, order: int = 1,
+        algorithm_2d: str = "Automatic", algorithm_3d: str = "Automatic",
+        doc_name: Optional[str] = None, name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Build a standalone Gmsh FEM mesh from a Part/Shape.
+
+        ``order`` 1=linear, 2=quadratic. Returns node/element counts.
+        Use ``export_mesh`` afterwards to write UNV/INP/MED/VTK/STL.
+        """
+        return get_client().call(
+            "generate_mesh", obj_name=obj_name, mesh_size_mm=mesh_size_mm,
+            min_size_mm=min_size_mm, order=order,
+            algorithm_2d=algorithm_2d, algorithm_3d=algorithm_3d,
+            doc_name=doc_name, name=name,
+        )
+
+    @mcp.tool()
+    def list_meshes(ctx: Context, doc_name: Optional[str] = None) -> Dict[str, Any]:
+        """List FEM meshes and surface meshes in the document."""
+        return get_client().call("list_meshes", doc_name=doc_name)
+
+    @mcp.tool()
+    def export_mesh(
+        ctx: Context, mesh_name: str, path: str,
+        doc_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Export a mesh to UNV / INP / MED / VTK / DAT / BDF / Z88 (FEM),
+        or STL / OBJ / PLY (surface). Extension picks the format.
+        """
+        return get_client().call(
+            "export_mesh", mesh_name=mesh_name, path=path, doc_name=doc_name,
         )
 
     # ------------------------------------------------------- FEM export

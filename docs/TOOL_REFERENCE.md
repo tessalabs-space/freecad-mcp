@@ -16,6 +16,8 @@ This is the surface, grouped by intent.
 | `get_objects(doc_name?)` | Type + visibility of every object |
 | `get_object(obj_name, doc_name?)` | Full properties dump |
 | `delete_object(obj_name, doc_name?)` | Remove + recompute |
+| `rename_object(obj_name, new_label, doc_name?)` | Change an object's Label (collisions auto-suffixed) |
+| `rename_objects(renames, doc_name?)` | Batch rename via `[{name, label}, ...]` — cleanup pass after STEP imports |
 
 ## Geometry
 
@@ -53,6 +55,16 @@ This is the surface, grouped by intent.
 | `find_fasteners`, `remove_fasteners` | By label pattern AND shape fingerprint. Default `dry_run=true` |
 | `find_thin_bodies` | Flag sub-threshold bounding boxes |
 
+## Shape healing / simplification
+
+Generic OCC repairs for imported geometry — use before meshing or feature-specific defeaturing.
+
+| Tool | Purpose |
+| --- | --- |
+| `simplify_shape(obj_name, remove_splitter?, unify_faces?, unify_edges?, heal?, sew_tolerance_mm?, min_face_area_mm2?)` | Pipelined heal → splitter → unify-same-domain → optional sew → optional tiny-face drop |
+| `find_small_faces(obj_name, max_area_mm2?)` | List faces under an area threshold |
+| `remove_small_faces(obj_name, max_area_mm2?)` | Drop those faces via `removeFeature` |
+
 ## Analysis prep
 
 `extract_midsurface`, `detect_symmetry`, `keep_external_surfaces`,
@@ -85,7 +97,24 @@ Standard tag vocabulary: `inlet`, `outlet`, `wall`, `symmetry`,
 
 ## Animation / render
 
-`turntable`, `keyframe_camera`, `render_png`.
+| Tool | Purpose |
+| --- | --- |
+| `turntable(output_dir, frames?, axis?, ...)` | 360° camera orbit → PNG sequence |
+| `keyframe_camera(output_dir, keyframes, frames_between?, ...)` | Interpolated camera path → PNG sequence |
+| `keyframe_parts(output_dir, tracks, frames_between?, ...)` | Animate object Placements (pos + axis-angle rotation) across keyframes → PNG sequence; original placements restored after render |
+| `render_png(path?, width?, height?, background?, quality?)` | One high-quality still |
+| `encode_video(frames_dir, output_path, fps?, pattern?, crf?)` | Encode PNG frames to mp4 / webm / gif / mov via ffmpeg (ffmpeg must be on PATH) |
+| `ffmpeg_available(ffmpeg_path?)` | Probe whether ffmpeg is reachable |
+
+## Meshing
+
+Standalone Gmsh meshing + neutral-format mesh export, independent of the full solver-deck writers below.
+
+| Tool | Purpose |
+| --- | --- |
+| `generate_mesh(obj_name, mesh_size_mm?, min_size_mm?, order?, algorithm_2d?, algorithm_3d?)` | Build a `FemMeshGmsh` on a Part/Shape (order 1 linear, 2 quadratic); returns node / element counts |
+| `list_meshes(doc_name?)` | Enumerate FEM meshes and surface meshes in the document |
+| `export_mesh(mesh_name, path)` | Write to `.unv`, `.inp`, `.med`, `.vtk`, `.dat`, `.bdf`, `.z88` (FEM) or `.stl`, `.obj`, `.ply` (surface) — extension picks format |
 
 ## Solver export
 
