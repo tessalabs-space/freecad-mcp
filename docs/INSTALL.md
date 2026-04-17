@@ -3,7 +3,7 @@
 ## 1. Install the MCP server
 
 ```bash
-git clone https://github.com/Tessalabs/freecad-mcp
+git clone https://github.com/tessalabs-space/freecad-mcp
 cd freecad-mcp
 uv sync
 ```

@@ -81,7 +81,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design details.
 
 ```bash
 # MCP server
-git clone https://github.com/Tessalabs/freecad-mcp
+git clone https://github.com/tessalabs-space/freecad-mcp
 cd freecad-mcp
 uv sync
 
