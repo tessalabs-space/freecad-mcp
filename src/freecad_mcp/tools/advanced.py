@@ -98,15 +98,69 @@ def register(mcp, get_client):  # noqa: C901
     def create_drawing_page(
         ctx: Context,
         template_path: Optional[str] = None,
+        sheet: Optional[str] = None,
         name: Optional[str] = None,
         doc_name: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Create a TechDraw page. Falls back to a bundled template if
-        ``template_path`` is not given.
+        """Create a TechDraw page. Pass ``sheet`` (e.g. 'A3_Landscape',
+        'A4_Landscape', 'A2_Landscape') to pick a bundled template, or
+        ``template_path`` for a custom SVG.
         """
         return get_client().call(
             "create_drawing_page", template_path=template_path,
-            name=name, doc_name=doc_name,
+            sheet=sheet, name=name, doc_name=doc_name,
+        )
+
+    @mcp.tool()
+    def create_projection_group(
+        ctx: Context,
+        page_name: str,
+        source_objects: List[str],
+        projections: Optional[List[str]] = None,
+        scale: Optional[float] = None,
+        position: Optional[Dict[str, float]] = None,
+        name: Optional[str] = None,
+        doc_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Add a third-angle projection group (Front + supplementary
+        views) to a page. TechDraw lays the views out automatically, no
+        overlap. ``projections`` defaults to ['Top', 'Right']; valid
+        entries: Top, Bottom, Left, Right, Rear, FrontTopLeft,
+        FrontTopRight, FrontBottomLeft, FrontBottomRight. ``scale=None``
+        auto-scales to fit the page.
+        """
+        return get_client().call(
+            "create_projection_group", page_name=page_name,
+            source_objects=source_objects, projections=projections,
+            scale=scale, position=position, name=name, doc_name=doc_name,
+        )
+
+    @mcp.tool()
+    def create_manufacturing_drawing(
+        ctx: Context,
+        object_name: str,
+        output_path: Optional[str] = None,
+        title: Optional[str] = None,
+        author: Optional[str] = None,
+        sheet: str = "A3_Landscape",
+        projections: Optional[List[str]] = None,
+        include_iso: bool = True,
+        scale: Optional[float] = None,
+        add_overall_dimensions: bool = True,
+        doc_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """One-shot manufacturing drawing: templated sheet, projection
+        group (Front + Top + Right by default, laid out correctly),
+        optional isometric, populated title-block (title / author /
+        scale / date / material / drawing number), overall-extent
+        dimensions on the front view, and optional PDF export.
+        """
+        return get_client().call(
+            "create_manufacturing_drawing", object_name=object_name,
+            output_path=output_path, title=title, author=author,
+            sheet=sheet, projections=projections, include_iso=include_iso,
+            scale=scale, add_overall_dimensions=add_overall_dimensions,
+            doc_name=doc_name,
         )
 
     @mcp.tool()

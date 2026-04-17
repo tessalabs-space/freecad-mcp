@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 import FreeCAD
 
-from ..utils import get_document, ok
+from ..utils import get_document, ok, shape_center_of_mass
 
 
 def mass_budget(
@@ -48,7 +48,7 @@ def mass_budget(
             rows.append({"name": obj.Name, "volume_m3": vol_m3, "mass_kg": None, "material": material})
             continue
         mass = vol_m3 * density
-        cm = obj.Shape.CenterOfMass
+        cm = shape_center_of_mass(obj.Shape)
         rows.append(
             {
                 "name": obj.Name,

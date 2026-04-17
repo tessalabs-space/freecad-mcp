@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional
 import FreeCAD
 import Part
 
-from ..utils import get_document, get_object, ok, err
+from ..utils import get_document, get_object, ok, err, shape_center_of_mass
 
 
 def extract_midsurface(
@@ -53,7 +53,7 @@ def detect_symmetry(
     obj = get_object(doc_name, obj_name)
     shape = obj.Shape
     bb = shape.BoundBox
-    cm = shape.CenterOfMass
+    cm = shape_center_of_mass(shape)
     bb_center = FreeCAD.Vector(
         0.5 * (bb.XMin + bb.XMax),
         0.5 * (bb.YMin + bb.YMax),

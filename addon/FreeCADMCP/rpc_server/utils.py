@@ -93,6 +93,41 @@ def serialize_vector(v) -> Dict[str, float]:
     return {"x": float(v.x), "y": float(v.y), "z": float(v.z)}
 
 
+def shape_center_of_mass(shape):
+    """Centre-of-mass that works across Part.Solid, Part.Compound, Part.Shell.
+
+    FreeCAD 1.1's ``Part.Compound`` exposes ``CenterOfGravity`` but not
+    ``CenterOfMass``; ``Part.Solid`` exposes both. Prefer ``CenterOfGravity``
+    everywhere; fall back to a volume-weighted average of sub-solids, then
+    the bounding-box centre.
+    """
+    if hasattr(shape, "CenterOfGravity"):
+        try:
+            return shape.CenterOfGravity
+        except Exception:
+            pass
+    if hasattr(shape, "CenterOfMass"):
+        try:
+            return shape.CenterOfMass
+        except Exception:
+            pass
+    solids = getattr(shape, "Solids", None) or []
+    total = 0.0
+    weighted = FreeCAD.Vector(0, 0, 0)
+    for s in solids:
+        try:
+            v = float(s.Volume)
+            c = getattr(s, "CenterOfGravity", None) or getattr(s, "CenterOfMass", None)
+            if c is not None and v > 0:
+                total += v
+                weighted = weighted + FreeCAD.Vector(c.x * v, c.y * v, c.z * v)
+        except Exception:
+            continue
+    if total > 0:
+        return weighted.multiply(1.0 / total)
+    return shape.BoundBox.Center
+
+
 def serialize_placement(p) -> Dict[str, Any]:
     axis = p.Rotation.Axis
     return {

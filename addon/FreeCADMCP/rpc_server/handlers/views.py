@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 
 import FreeCAD
 
-from ..utils import get_document, get_object, ok, err
+from ..utils import get_document, get_object, ok, err, shape_center_of_mass
 
 
 _VIEW_DIRECTIONS = {
@@ -124,7 +124,7 @@ def explode(
     centres = []
     for o in objs:
         try:
-            centres.append(o.Shape.CenterOfMass)
+            centres.append(shape_center_of_mass(o.Shape))
         except Exception:
             centres.append(o.Placement.Base)
     centroid = FreeCAD.Vector(

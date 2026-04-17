@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 
 import FreeCAD
 
-from ..utils import get_document, get_object, ok, err, serialize_vector
+from ..utils import get_document, get_object, ok, err, serialize_vector, shape_center_of_mass
 
 
 def mass_properties(
@@ -21,7 +21,7 @@ def mass_properties(
     volume_mm3 = shape.Volume
     volume_m3 = volume_mm3 * 1e-9
     surface_area_mm2 = shape.Area
-    center = shape.CenterOfMass
+    center = shape_center_of_mass(shape)
     result: Dict[str, Any] = {
         "volume_mm3": volume_mm3,
         "volume_m3": volume_m3,

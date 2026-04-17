@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 import FreeCAD
 
-from ..utils import get_document, get_object, ok, err
+from ..utils import get_document, get_object, ok, err, shape_center_of_mass
 
 
 _ANNOTATION_STORE = "FreeCADMCP_Annotations"
@@ -43,7 +43,7 @@ def add_callout(
     if target_face:
         try:
             face = obj.Shape.Faces[target_face - 1]
-            tip = face.CenterOfMass
+            tip = shape_center_of_mass(face)
         except Exception:
             return err(f"face {target_face} not found on {target_object}")
     else:
