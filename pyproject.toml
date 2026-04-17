@@ -9,11 +9,6 @@ authors = [
 ]
 license = { text = "MIT" }
 requires-python = ">=3.11"
-
-[project.urls]
-Homepage = "https://github.com/tessalabs-space/freecad-mcp"
-Repository = "https://github.com/tessalabs-space/freecad-mcp"
-Issues = "https://github.com/tessalabs-space/freecad-mcp/issues"
 dependencies = [
     "mcp[cli]>=1.12.2",
     "validators>=0.34.0",
@@ -31,6 +26,11 @@ dev = [
     "pytest-asyncio>=0.23",
     "ruff>=0.5",
 ]
+
+[project.urls]
+Homepage = "https://github.com/tessalabs-space/freecad-mcp"
+Repository = "https://github.com/tessalabs-space/freecad-mcp"
+Issues = "https://github.com/tessalabs-space/freecad-mcp/issues"
 
 [project.scripts]
 freecad-mcp = "freecad_mcp.server:main"
