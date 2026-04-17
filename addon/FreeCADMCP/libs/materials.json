@@ -1,0 +1,147 @@
+{
+  "description": "Curated material library. Values are representative room-temperature properties; override for thermal-dependent analyses.",
+  "version": 1,
+  "materials": {
+    "Aluminum_6061_T6": {
+      "category": "metal",
+      "density_kg_m3": 2700,
+      "thermal_conductivity_W_mK": 167,
+      "specific_heat_J_kgK": 896,
+      "youngs_modulus_GPa": 68.9,
+      "poisson_ratio": 0.33,
+      "cte_1_K": 2.36e-5,
+      "emissivity": 0.10,
+      "electrical_resistivity_Ohm_m": 3.99e-8
+    },
+    "Aluminum_7075_T6": {
+      "category": "metal",
+      "density_kg_m3": 2810,
+      "thermal_conductivity_W_mK": 130,
+      "specific_heat_J_kgK": 960,
+      "youngs_modulus_GPa": 71.7,
+      "poisson_ratio": 0.33,
+      "cte_1_K": 2.36e-5,
+      "emissivity": 0.10
+    },
+    "Copper_OFHC": {
+      "category": "metal",
+      "density_kg_m3": 8940,
+      "thermal_conductivity_W_mK": 401,
+      "specific_heat_J_kgK": 385,
+      "youngs_modulus_GPa": 117,
+      "poisson_ratio": 0.34,
+      "cte_1_K": 1.7e-5,
+      "emissivity": 0.03
+    },
+    "Stainless_Steel_304": {
+      "category": "metal",
+      "density_kg_m3": 8000,
+      "thermal_conductivity_W_mK": 16.2,
+      "specific_heat_J_kgK": 500,
+      "youngs_modulus_GPa": 193,
+      "poisson_ratio": 0.29,
+      "cte_1_K": 1.72e-5,
+      "emissivity": 0.28
+    },
+    "Titanium_Ti6Al4V": {
+      "category": "metal",
+      "density_kg_m3": 4430,
+      "thermal_conductivity_W_mK": 6.7,
+      "specific_heat_J_kgK": 526,
+      "youngs_modulus_GPa": 113.8,
+      "poisson_ratio": 0.342,
+      "cte_1_K": 8.6e-6,
+      "emissivity": 0.30
+    },
+    "Invar_36": {
+      "category": "metal",
+      "density_kg_m3": 8100,
+      "thermal_conductivity_W_mK": 10.15,
+      "specific_heat_J_kgK": 515,
+      "youngs_modulus_GPa": 141,
+      "poisson_ratio": 0.29,
+      "cte_1_K": 1.2e-6,
+      "emissivity": 0.25
+    },
+    "Silicon": {
+      "category": "semiconductor",
+      "density_kg_m3": 2329,
+      "thermal_conductivity_W_mK": 148,
+      "specific_heat_J_kgK": 700,
+      "youngs_modulus_GPa": 130,
+      "poisson_ratio": 0.28,
+      "cte_1_K": 2.6e-6,
+      "emissivity": 0.67
+    },
+    "FR4_Epoxy_Glass": {
+      "category": "composite",
+      "density_kg_m3": 1850,
+      "thermal_conductivity_W_mK": 0.3,
+      "specific_heat_J_kgK": 1200,
+      "youngs_modulus_GPa": 22,
+      "poisson_ratio": 0.28,
+      "cte_1_K": 1.4e-5,
+      "emissivity": 0.90
+    },
+    "CFRP_Quasi_Isotropic": {
+      "category": "composite",
+      "density_kg_m3": 1600,
+      "thermal_conductivity_W_mK": 7,
+      "specific_heat_J_kgK": 850,
+      "youngs_modulus_GPa": 70,
+      "poisson_ratio": 0.30,
+      "cte_1_K": 2.0e-6,
+      "emissivity": 0.85
+    },
+    "Kapton_HN": {
+      "category": "polymer",
+      "density_kg_m3": 1420,
+      "thermal_conductivity_W_mK": 0.12,
+      "specific_heat_J_kgK": 1090,
+      "youngs_modulus_GPa": 2.5,
+      "poisson_ratio": 0.34,
+      "cte_1_K": 2.0e-5,
+      "emissivity": 0.70
+    },
+    "MLI_Outer_Layer_Aluminized_Kapton": {
+      "category": "thermal_coating",
+      "density_kg_m3": 1420,
+      "thermal_conductivity_W_mK": 0.12,
+      "specific_heat_J_kgK": 1090,
+      "emissivity": 0.035,
+      "solar_absorptivity": 0.14,
+      "notes": "Outer surface of a typical MLI blanket — low-e, low-alpha side out."
+    },
+    "Black_Paint_Chemglaze_Z306": {
+      "category": "thermal_coating",
+      "emissivity": 0.90,
+      "solar_absorptivity": 0.95
+    },
+    "White_Paint_AZ93": {
+      "category": "thermal_coating",
+      "emissivity": 0.89,
+      "solar_absorptivity": 0.17
+    },
+    "Air_STP": {
+      "category": "fluid",
+      "density_kg_m3": 1.225,
+      "thermal_conductivity_W_mK": 0.0257,
+      "specific_heat_J_kgK": 1005,
+      "viscosity_Pa_s": 1.81e-5
+    },
+    "Water_STP": {
+      "category": "fluid",
+      "density_kg_m3": 997,
+      "thermal_conductivity_W_mK": 0.598,
+      "specific_heat_J_kgK": 4181,
+      "viscosity_Pa_s": 1.002e-3
+    },
+    "Ethylene_Glycol_Water_50_50": {
+      "category": "fluid",
+      "density_kg_m3": 1075,
+      "thermal_conductivity_W_mK": 0.37,
+      "specific_heat_J_kgK": 3300,
+      "viscosity_Pa_s": 3.5e-3
+    }
+  }
+}

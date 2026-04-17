@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+*.FCStd1
+*.FCBak
+.DS_Store
+.vscode/
+.idea/
+results/
+assets/generated/
